@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific JavaScript Calculator</title>
+    <style>
+        :root {
+            --primary: #4a56b2;
+            --secondary: #a6b1e1;
+            --dark: #2a2d3b;
+            --light: #f9f9f9;
+            --danger: #e74c3c;
+            --success: #1F6357;
+            --radius: 12px;
+            --shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--light);
+            background-image: url('WhatsApp Image 2025-05-20 at 11.15.41.jpeg');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 20px;
+        }
+
+        .calculator {
+            width: 100%;
+            max-width: 360px;
+            background: var(--light);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .calculator:hover {
+            transform: translateY(-5px);
+        }
+
+        .display {
+            padding: 25px 20px;
+            background: var(--dark);
+            color: white;
+            text-align: right;
+            position: relative;
+        }
+
+        .secondary-display {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            height: 20px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .primary-display {
+            font-size: 2.5rem;
+            font-weight: 300;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 20px;
+            background: white;
+        }
+
+        button {
+            border: none;
+            outline: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #a6b1e1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            width: 60px;
+            margin: 0 auto;
+            user-select: none;
+        }
+
+        button:hover {
+            background: #4a56b2;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .operator {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+
+        .operator:hover {
+            background: #4a56b2;
+        }
+
+        .trig {
+            background: var(--primary);
+            color: white;
+        }
+
+        .trig:hover {
+            background: #3a4a9a;
+        }
+
+        .equals {
+            background: var(--success);
+            color: white;
+        }
+
+        .equals:hover {
+            background: #00008b;
+        }
+
+        .clear {
+            background: var(--danger);
+            color: white;
+        }
+
+        .clear:hover {
+            background: #c0392b;
+        }
+
+        .span-2 {
+            grid-column: span 2;
+            width: auto;
+            border-radius: var(--radius);
+        }
+
+        @media (max-width: 400px) {
+            button {
+                height: 55px;
+                width: 55px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="secondary-display" id="secondary-display"></div>
+            <div class="primary-display" id="primary-display">0</div>
+        </div>
+        <div class="buttons">
+            <button onclick="appendFunction('Math.sin(')" class="trig">sin</button>
+            <button onclick="appendFunction('Math.cos(')" class="trig">cos</button>
+            <button onclick="appendFunction('Math.tan(')" class="trig">tan</button>
+            <button class="clear" onclick="clearDisplay()">AC</button>
+
+            <button onclick="appendParenthesis('(')">(</button>
+            <button onclick="appendParenthesis(')')">)</button>
+            <button onclick="backspace()">⌫</button>
+            <button onclick="appendOperator('/')">/</button>
+            
+            <button onclick="appendNumber(7)">7</button>
+            <button onclick="appendNumber(8)">8</button>
+            <button onclick="appendNumber(9)">9</button>
+            <button onclick="appendOperator('*')">×</button>
+            
+            <button onclick="appendNumber(4)">4</button>
+            <button onclick="appendNumber(5)">5</button>
+            <button onclick="appendNumber(6)">6</button>
+            <button onclick="appendOperator('-')" class="operator">-</button>
+            
+            <button onclick="appendNumber(1)">1</button>
+            <button onclick="appendNumber(2)">2</button>
+            <button onclick="appendNumber(3)">3</button>
+            <button onclick="appendOperator('+')" class="operator">+</button>
+            
+            <button onclick="appendDecimal()" class="decimal">.</button>
+            <button onclick="appendNumber(0)">0</button>
+            <button onclick="appendPi()" class="operator">π</button>
+            <button onclick="calculate()" class="equals">=</button>
+            
+            
+            
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let previousInput = '';
+        let operation = null;
+        let resetScreen = false;
+
+        const primaryDisplay = document.getElementById('primary-display');
+        const secondaryDisplay = document.getElementById('secondary-display');
+
+        function updateDisplay() {
+            primaryDisplay.textContent = currentInput;
+            secondaryDisplay.textContent = previousInput + (operation ? ' ' + operation : '');
+            
+            // Auto-scroll for long inputs
+            primaryDisplay.scrollLeft = primaryDisplay.scrollWidth;
+        }
+
+        function appendNumber(number) {
+            if (currentInput === '0' || resetScreen) {
+                currentInput = '';
+                resetScreen = false;
+            }
+            currentInput += number;
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            if (resetScreen) {
+                currentInput = '0.';
+                resetScreen = false;
+                updateDisplay();
+                return;
+            }
+            if (currentInput.includes('.')) return;
+            if (currentInput === '') currentInput = '0';
+            currentInput += '.';
+            updateDisplay();
+        }
+
+        function appendFunction(func) {
+            if (resetScreen) {
+                currentInput = '';
+                resetScreen = false;
+            }
+            currentInput += func;
+            updateDisplay();
+        }
+
+        function appendPi() {
+            if (currentInput === '0' || resetScreen) {
+                currentInput = 'Math.PI';
+                resetScreen = false;
+            } else {
+                currentInput += 'Math.PI';
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (operation !== null && !resetScreen) {
+                calculate();
+            }
+            operation = op;
+            previousInput = currentInput;
+            resetScreen = true;
+            updateDisplay();
+        }
+
+        function appendParenthesis(paren) {
+            if (resetScreen) {
+                currentInput = '';
+                resetScreen = false;
+            }
+            currentInput += paren;
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (operation === null && !currentInput.includes('Math.')) return;
+            
+            let computation;
+            try {
+                if (operation !== null) {
+                    computation = eval(previousInput + operation + currentInput);
+                } else {
+                    computation = eval(currentInput);
+                }
+                
+                if (typeof computation !== 'number' || isNaN(computation)) {
+                    throw new Error('Invalid input');
+                }
+                
+                computation = parseFloat(computation.toFixed(8));
+                currentInput = computation.toString();
+                previousInput = '';
+                operation = null;
+                resetScreen = true;
+                updateDisplay();
+                
+            } catch (error) {
+                currentInput = 'Error';
+                previousInput = '';
+                operation = null;
+                updateDisplay();
+            }
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            resetScreen = false;
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentInput.length === 1 || (currentInput.length === 2 && currentInput.startsWith('-'))) {
+                currentInput = '0';
+            } else {
+                currentInput = currentInput.slice(0, -1);
+            }
+            updateDisplay();
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                calculate();
+            } else if (e.key >= '0' && e.key <= '9') {
+                appendNumber(parseInt(e.key));
+            } else if (e.key === '.') {
+                appendDecimal();
+            } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                appendOperator(e.key);
+            } else if (e.key === 'Backspace') {
+                backspace();
+            } else if (e.key === 'Escape') {
+                clearDisplay();
+            } else if (e.key === '(' || e.key === ')') {
+                appendParenthesis(e.key);
+            }
+        });
+    </script>
+</body>
+</html>
